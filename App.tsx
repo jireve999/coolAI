@@ -8,7 +8,9 @@ import ImagesPage from './app/screens/ImagesPage';
 import WhisperPage from './app/screens/WhisperPage';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-
+import { RootSiblingParent } from 'react-native-root-siblings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_API_KEY } from './app/constants/constants';
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const openAccount = () => {
@@ -19,8 +21,9 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
     WebBrowser.openBrowserAsync('https://help.openai.com/en/collections/3742473-chatgpt');
   };
 
-  const signOut = () => {
-  
+  const signOut = async () => {
+    await AsyncStorage.removeItem(STORAGE_API_KEY);
+    props.navigation.navigate('Settings');
   };
 
   return (
@@ -107,9 +110,10 @@ function DrawerNavigation() {
 }
 export default function App() {
   return (
-    <NavigationContainer>
-      <DrawerNavigation />
-    </NavigationContainer>
-
+    <RootSiblingParent>
+      <NavigationContainer>
+        <DrawerNavigation />
+      </NavigationContainer>
+    </RootSiblingParent>
   );
 }
