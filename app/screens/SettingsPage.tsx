@@ -1,16 +1,21 @@
 import { View, Text, Alert, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_API_KEY } from '../constants/constants';
 import Toast from 'react-native-root-toast';
+import { useNavigation } from '@react-navigation/native';
+import { STORAGE_API_KEY } from '../constants/constants';
 
 const SettingsPage = () => {
   const [apiKey, setApiKey] = useState('');
   const [hasKey, setHasKey] = useState(false);
+  const navigation = useNavigation();
 
-  useLayoutEffect(() => {
-    loadApiKey();
-  }, []);
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadApiKey();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const loadApiKey = async() => {
     try {
@@ -18,6 +23,9 @@ const SettingsPage = () => {
       if (value !== null) {
         setApiKey(value);
         setHasKey(true);
+      } else {
+        setHasKey(false);
+        setApiKey('');
       }
     } catch(e) {
       Alert.alert('Error', 'Could not load API key');

@@ -11,6 +11,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { RootSiblingParent } from 'react-native-root-siblings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_API_KEY } from './app/constants/constants';
+import 'react-native-url-polyfill/auto';
+import 'react-native-gesture-handler';
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const openAccount = () => {
