@@ -1,4 +1,4 @@
-import axios from 'axios';
+import OpenAI from 'openai';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { BehaviorSubject } from "rxjs";
@@ -59,28 +59,22 @@ export function useApi() {
     messageSubject.next([...messageSubject.value, newMessage]);
 
     try {
-      // Call DeepSeek API (required parameters based on documentation)
-      const response = await axios.post(
-        'https://api.deepseek.com/chat/completions',
-        {
-          messages: [{ role: 'user', content: prompt }],
-          model: 'deepseek-chat',
-          temperature: 1.3,
-          top_p: 1, // Required parameter
-          frequency_penalty: 0, // Required parameter
-          presence_penalty: 0, // Required parameter
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Accept': 'application/json', // Required header
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // Initialize DeepSeek client
+      const deepseek = new OpenAI({
+        baseURL: 'https://api.deepseek.com/v1', // Official API endpoint
+        apiKey: apiKey,
+      });
 
-      // Handle response (based on DeepSeek API response structure)
-      const botResponse = response.data.choices[0].message.content;
+      // API call with required parameters
+      const completion = await deepseek.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model: 'deepseek-chat',
+        temperature: 0.7,
+        stream: false, // Set to true for streaming
+      });
+
+      // Handle response
+      const botResponse = completion.choices[0].message.content;
       const botMessage: Message = {
         text: botResponse || 'No response from API',
         from: Creator.Bot,
@@ -88,16 +82,16 @@ export function useApi() {
       messageSubject.next([...messageSubject.value, botMessage]);
       return true;
     } catch (error: any) {
-      console.error('API Error:', error.response?.data || error.message);
+      console.error('API Error:', error);
 
-      // Enhanced error handling based on documentation
-      const errorMessage = error.response?.data?.error?.message || 'API request failed';
-      const statusSpecificMessage = error.response?.status === 429
-        ? 'Rate limit exceeded. Please try again later.'
+      // Enhanced error handling
+      const errorMessage = error.message || 'API request failed';
+      const statusMessage = error.status === 429 
+        ? 'Rate limit exceeded' 
         : errorMessage;
 
       const botMessage: Message = {
-        text: `[DeepSeek Error] ${statusSpecificMessage}`,
+        text: `[DeepSeek Error] ${statusMessage}`,
         from: Creator.Bot,
       };
       messageSubject.next([...messageSubject.value, botMessage]);
@@ -105,19 +99,19 @@ export function useApi() {
     }
   };
 
-  // DeepSeek does not currently support these features
+  // Unsupported features
   const generateImage = async () => {
-    throw new Error('Image generation is not supported by DeepSeek.');
+    throw new Error('Image generation not supported');
   };
 
   const speechToText = async () => {
-    throw new Error('Speech-to-text is not supported by DeepSeek.');
+    throw new Error('Speech-to-text not supported');
   };
 
   return {
     messages,
     getCompletion,
-    // generateImage,
-    // speechToText,
+    generateImage,
+    speechToText
   };
 }
